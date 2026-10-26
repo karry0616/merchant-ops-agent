@@ -1,0 +1,89 @@
+"""商家智能 Agent 配置"""
+
+import os
+
+_env_path = os.path.join(os.path.dirname(__file__), ".env")
+if os.path.exists(_env_path):
+    with open(_env_path, encoding="utf-8") as _f:
+        for _line in _f:
+            _line = _line.strip()
+            if not _line or _line.startswith("#") or "=" not in _line:
+                continue
+            _k, _v = _line.split("=", 1)
+            _k = _k.strip()
+            _v = _v.strip().strip("\"'")  # 去除两端的引号
+            if _v and not _v.startswith(("'", '"')):
+                _hash_pos = _v.find(" #")
+                if _hash_pos > 0:
+                    _v = _v[:_hash_pos].strip()
+            os.environ.setdefault(_k, _v)
+
+# "ollama" 或 "deepseek"
+LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "deepseek")
+
+OLLAMA_BASE = os.environ.get("OLLAMA_BASE", "http://localhost:11434")
+OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen2:7b")
+OLLAMA_FAST_MODEL = os.environ.get("OLLAMA_FAST_MODEL", "qwen2:1.5b")
+
+DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
+DEEPSEEK_API_BASE = os.environ.get("DEEPSEEK_API_BASE", "https://api.deepseek.com")
+DEEPSEEK_MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-chat")
+
+AGENT_TIMEOUT = int(os.environ.get("AGENT_TIMEOUT", "300"))   # LLM 调用超时（秒）
+MAX_RETRIES = int(os.environ.get("MAX_RETRIES", "2"))          # LLM 调用重试次数
+REACT_MAX_ROUNDS = int(os.environ.get("REACT_MAX_ROUNDS", "8"))
+
+# 模型名格式: "provider:model_name"
+#   deepseek:xxx   → 走 DeepSeek API  （复杂推理）
+#   ollama:xxx     → 走本地 Ollama    （简单任务）
+AGENT_MODEL = {
+    "selector": "deepseek:deepseek-chat",   # 选品：多步工具调用 + 市场分析 → DeepSeek
+    "analyst":  "deepseek:deepseek-chat",   # 运营分析：数据建模 + 策略 → DeepSeek
+    "sourcing": "deepseek:deepseek-chat",   # 货源：供应链推理 + 多工具 → DeepSeek
+    "lister":   "ollama:qwen2:7b",          # 上架：模板化文本生成 → 本地
+    "service":  "ollama:qwen2:7b",          # 客服：FAQ 检索 + 话术 → 本地
+}
+AGENT_LIGHT_MODEL = {
+    "selector": "ollama:qwen2:1.5b",
+    "analyst":  "ollama:qwen2:1.5b",
+    "sourcing": "ollama:qwen2:1.5b",
+    "lister":   "ollama:qwen2:1.5b",
+    "service":  "ollama:qwen2:1.5b",
+}
+
+RAG_TOP_K = 3          # 检索返回的最相关文档数
+
+CACHE_ENABLED = True
+CACHE_TTL = 3600       # 缓存过期时间（秒）
+CACHE_CAPACITY = 200   # 缓存最大条目数
+
+RATE_LIMIT_ENABLED = True
+RATE_LIMIT_MAX = 30     # 每 IP 每分钟最大请求数
+RATE_LIMIT_WINDOW = 60  # 窗口大小（秒）
+
+LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
+LOG_FORMAT = "%(asctime)s [%(name)s] %(levelname)s: %(message)s"
+
+WEB_PORT = int(os.environ.get("WEB_PORT", "7860"))
+WEB_HOST = os.environ.get("WEB_HOST", "127.0.0.1")
+
+# MySQL 配置（对话记录存储）
+MYSQL_HOST = os.environ.get("MYSQL_HOST", "localhost")
+MYSQL_PORT = int(os.environ.get("MYSQL_PORT", "3307"))
+MYSQL_USER = os.environ.get("MYSQL_USER", "merchant")
+MYSQL_PASSWORD = os.environ.get("MYSQL_PASSWORD", "merchant_pass_2024")
+MYSQL_DATABASE = os.environ.get("MYSQL_DATABASE", "merchant_agent")
+
+# Milvus 配置（向量检索）
+MILVUS_HOST = os.environ.get("MILVUS_HOST", "localhost")
+MILVUS_PORT = int(os.environ.get("MILVUS_PORT", "19530"))
+MILVUS_COLLECTION = os.environ.get("MILVUS_COLLECTION", "conversation_embeddings")
+
+# 默认管理员凭据（首次启动时创建）
+# WARNING: 生产环境务必通过环境变量 ADMIN_USER / ADMIN_PASS 覆盖默认值
+ADMIN_USER = os.environ.get("ADMIN_USER", "admin")
+ADMIN_PASS = os.environ.get("ADMIN_PASS", "admin123")
+_ADMIN_IS_DEFAULT = not os.environ.get("ADMIN_PASS")
+if _ADMIN_IS_DEFAULT:
+    import logging as _lg
+    _lg.warning("⚠️ 使用默认管理员密码 (admin123)，生产环境请设置 ADMIN_PASS 环境变量")

@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# IDE
+.idea/
+.vscode/
+
+# Data
+agent_memory.db
+*.bin
+*.pkl
+*.npy
+
+# Cache
+.pytest_cache/
+__pycache__/
+knowledge/data/.embed_cache.json
+
+# Outputs
+outputs/
+
+# Env
+.env
+
+# Local databases (auto-generated)
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# Docker compose overrides
+docker-compose.override.yml
